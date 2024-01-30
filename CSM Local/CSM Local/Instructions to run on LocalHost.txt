@@ -1,0 +1,7 @@
+Instructions to run on LocalHost
+
+1. Open CSM.py
+2. Click Explorer (Ctrl + Shift + E)
+3. Press 'Open Folder'
+4. Press 'Select Folder' (make sure its pointing to the same directory)
+5. Run the Python file
