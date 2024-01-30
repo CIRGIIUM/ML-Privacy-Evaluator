@@ -1,0 +1,192 @@
+{% extends "baseCSM.html" %}
+
+{% block title %}CSV File Actions{% endblock %}
+
+{% block content %}
+<div class="flex-container">
+    <div class = "flex-container-row">
+    <div class="rounded-rectangle-small" style="display: flex; justify-content: space-evenly;">
+        <button id="beforeButton" onclick="toggleBeforeSection()">Before De-Identification</button>
+        <button id="afterButton" onclick="toggleAfterSection()">After De-Identification</button>
+        
+    </div>
+    <div class="rounded-rectangle-small2" style="display: flex; justify-content: space-evenly;">
+    <button id="submitButton" onclick="submitData()" style="margin-left: auto;">Submit Datasets</button> <!-- New Submit button -->
+</div>
+</div>
+
+
+    <div class="rounded-rectangle-long" id="before"> <!-- Changed class name to 'rounded-rectangle1' -->
+        <h2>Before De-Identification</h2> 
+        <form onsubmit="event.preventDefault(); uploadFile(1);">
+            <input type="file" id="csv_file1" accept=".csv">
+            <input type="submit" value="Upload">
+        </form>
+        <div id="message1"></div>
+        <div id="columns1"></div> 
+        <div id="top_rows1">  
+        </div>
+        
+    </div>
+
+    <div class="rounded-rectangle-long" id="after" style="display: none;">
+        <h2>After De-Identification</h2>
+        <form onsubmit="event.preventDefault(); uploadFile(2);">
+            <input type="file" id="csv_file2" accept=".csv">
+            <input type="submit" value="Upload">
+        </form>
+        <div id="message2"></div>
+        <div id="columns2"></div> 
+        <div id="top_rows2">
+            
+        </div>
+        
+        
+    </div>
+
+    <div class = "rounded-rectangle-long2" style="font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;letter-spacing: 1.1px;">
+        1. Upload your .csv document by pressing "Choose File" and "Upload" for Before De-Identification. 
+        <br>2. Tag which column should be tagged as the target column by pressing "Tag as DV".
+        <br>3. Repeat step 1 and 2 for After De-Identification section, then click on Submit Datasets.
+    
+    </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+
+    function submitData() {
+ 
+        // Redirect to the data page with the route "/data"
+        window.location.href = '/evaluate';
+    }
+    
+    function uploadFile(roundedRectangle) {
+        const fileInput = document.getElementById(`csv_file${roundedRectangle}`);
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('csv_file', file);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const messageDiv = document.getElementById(`message${roundedRectangle}`);
+            if (data.error) {
+                messageDiv.innerHTML = '<p class="error">' + data.error + '</p>';
+            } else if (data.message) {
+                messageDiv.innerHTML = '<p class="success">' + data.message + '</p>';
+                getColumns(roundedRectangle, file.name);
+                const topRowsDiv = document.getElementById(`top_rows${roundedRectangle}`);
+                topRowsDiv.innerHTML = data.top_5_rows;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function getColumns(roundedRectangle, filename) {
+        const formData = new FormData();
+        formData.append('filename', filename);
+
+        fetch('/view', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.columns) {
+                const columnsDiv = document.getElementById(`columns${roundedRectangle}`); // Changed the id here
+
+                // Clear the previous content of columnsDiv
+                columnsDiv.innerHTML = '';
+
+                const table = document.createElement('table');
+                const thead = document.createElement('thead');
+                const tbody = document.createElement('tbody');
+
+                // Create table header row
+                const headerRow = document.createElement('tr');
+                data.columns.forEach(column => {
+                    const th = document.createElement('th');
+                    th.innerHTML = `${column}<br><button onclick="editColumn(${roundedRectangle}, '${filename}', '${column}')">Tag as DV</button>`;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                table.appendChild(tbody);
+
+                columnsDiv.appendChild(table);
+            } else if (data.error) {
+                console.error('Error:', data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    function editColumn(roundedRectangle, filename, column) {
+        
+        if (roundedRectangle === 1 || roundedRectangle === 2) {
+            const action = 'prediction';
+            if (action && (action.trim().toLowerCase() === 'prediction')) {
+                const formData = new FormData();
+                formData.append('filename', filename);
+                formData.append('column', column);
+                formData.append('action', action.trim().toLowerCase());
+
+                fetch('/edit', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        getColumns(roundedRectangle, filename);
+                        const topRowsDiv = document.getElementById(`top_rows${roundedRectangle}`);
+                        topRowsDiv.innerHTML = data.top_5_rows;
+                    } else if (data.error) {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else if (action !== null) {
+                alert('Invalid action. Please enter "encrypt" or "drop".');
+            }
+        }
+    }
+
+    function toggleBeforeSection() {
+        const beforeSection = document.getElementById('before');
+        const afterSection = document.getElementById('after');
+        const beforeButton = document.getElementById('beforeButton');
+        const afterButton = document.getElementById('afterButton');
+
+        beforeSection.style.display = 'block';
+        afterSection.style.display = 'none';
+        beforeButton.classList.add('active');
+        afterButton.classList.remove('active');
+    }
+
+    function toggleAfterSection() {
+        const beforeSection = document.getElementById('before');
+        const afterSection = document.getElementById('after');
+        const beforeButton = document.getElementById('beforeButton');
+        const afterButton = document.getElementById('afterButton');
+
+        beforeSection.style.display = 'none';
+        afterSection.style.display = 'block';
+        beforeButton.classList.remove('active');
+        afterButton.classList.add('active');
+    }
+
+    // Wrap the toggleBeforeSection() function call inside a DOMContentLoaded event listener
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleBeforeSection();
+    });
+</script>
+</script>
+{% endblock %}

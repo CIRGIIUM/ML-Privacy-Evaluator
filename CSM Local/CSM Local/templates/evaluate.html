@@ -1,0 +1,177 @@
+{% extends "baseCSM.html" %}
+
+{% block title %}CSV File Actions{% endblock %}
+
+{% block content %}
+<div class="flex-container-row">
+  <div class="rounded-rectangle1" id="info">
+    <h2>List of Datasets</h2>
+    <ul>
+      {% for filename in filenames %}
+      <li>
+        <span>{{ filename }}</span>
+        <button class="view-btn" data-filename="{{ filename }}">View</button>
+      </li>
+      {% endfor %}
+    </ul>
+    <div>
+      <button id="classification-btn">Classification</button>
+      <button id="regression-btn">Regression</button>
+      <button id="clustering-btn">Clustering</button>
+    </div>
+    <p id="suitable-text" style="font-weight: bold;"></p>
+  </div>
+
+  <div class="rounded-rectangle1" id="table-container-1" style="display: none;">
+    <h2>View</h2>
+    <div id="table-content-1"></div>
+  </div>
+
+  <div class="rounded-rectangle1" id="table-container-2" style="display: none;">
+    <h2>View</h2>
+    <div id="table-content-2"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const classificationBtn = document.getElementById('classification-btn');
+    const regressionBtn = document.getElementById('regression-btn');
+    const clusteringBtn = document.getElementById('clustering-btn');
+    const suitableText = document.getElementById('suitable-text');
+    const tableContainers = [document.getElementById('table-container-1'), document.getElementById('table-container-2')];
+    const tableContents = [document.getElementById('table-content-1'), document.getElementById('table-content-2')];
+    const activeFiles = [];
+
+    viewButtons.forEach((button, index) => {
+      button.addEventListener('click', function() {
+        const filename = this.dataset.filename;
+        const isActive = this.classList.contains('active');
+
+        if (!isActive || activeFiles.includes(filename)) {
+          if (isActive) {
+            const fileIndex = activeFiles.indexOf(filename);
+            activeFiles.splice(fileIndex, 1);
+            tableContainers[index].style.display = 'none';
+            this.classList.remove('active');
+          } else {
+            activeFiles.push(filename);
+            tableContainers[activeFiles.length - 1].style.display = 'block';
+            this.classList.add('active');
+
+            fetch('/view', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                filename: filename
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.error) {
+                const fileIndex = activeFiles.indexOf(filename);
+                activeFiles.splice(fileIndex, 1);
+                tableContainers[activeFiles.length].style.display = 'none';
+                this.classList.remove('active');
+                alert(data.error);
+              } else {
+                const columns = data.columns;
+                let tableHTML = '<table border="1"><tr>';
+                for (const col of columns) {
+                  tableHTML += `<th>${col}</th>`;
+                }
+                tableHTML += '</tr>';
+                for (let i = 0; i < 5 && i < data.rows.length; i++) {
+                  tableHTML += '<tr>';
+                  for (const col of columns) {
+                    tableHTML += `<td>${data.rows[i][col]}</td>`;
+                  }
+                  tableHTML += '</tr>';
+                }
+                tableHTML += '</table>';
+                tableContents[activeFiles.length - 1].innerHTML = tableHTML;
+
+                
+
+                // Get the column names and find the DV column
+                const dvColumnName = Object.keys(data.rows[0]).find(columnName => columnName.endsWith('DV'));
+
+                if (dvColumnName) {
+                  const dvColumnValues = data.rows.map(row => row[dvColumnName]);
+
+                  // Convert string values to numbers for comparison
+                  const numericDvColumnValues = dvColumnValues.map(Number);
+
+                  // Check if the DV column has only numeric "0" and "1" values
+                  if (numericDvColumnValues.every(value => value === 0 || value === 1)) {
+                    // Use a simple check to determine classification or not
+                    if (numericDvColumnValues.includes(0) && numericDvColumnValues.includes(1)) {
+                      suitableText.innerHTML = 'Suitable for Classification';
+                    } else {
+                      suitableText.innerHTML = 'Suitable for Regression/Clustering';
+                    }
+                  } else {
+                    suitableText.innerHTML = 'Suitable for Regression/Clustering';
+                  }
+                } else {
+                  suitableText.innerHTML = 'No DV Column Found';
+                }
+
+                }
+                })
+            .catch(error => {
+              const fileIndex = activeFiles.indexOf(filename);
+              activeFiles.splice(fileIndex, 1);
+              tableContainers[activeFiles.length].style.display = 'none';
+              this.classList.remove('active');
+              alert('An error occurred while fetching data.');
+              console.error(error);
+            });
+          }
+        }
+      });
+    });
+
+    classificationBtn.addEventListener('click', function() {
+      performTrainAndEvaluate('classification');
+    });
+
+    regressionBtn.addEventListener('click', function() {
+      performTrainAndEvaluate('regression');
+    });
+
+    clusteringBtn.addEventListener('click', function() {
+      performTrainAndEvaluate('clustering');
+    });
+
+    function performTrainAndEvaluate(taskType) {
+      fetch(`/train_evaluate?type=${taskType}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          datasets: activeFiles
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          window.location.href = `/result?datasets=${activeFiles.join(',')}&type=${taskType}`;
+        }
+      })
+      .catch(error => {
+        alert('An error occurred while processing data.');
+        console.error(error);
+      });
+    }
+  });
+</script>
+{% endblock %}
