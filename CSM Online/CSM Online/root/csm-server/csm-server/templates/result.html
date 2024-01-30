@@ -1,0 +1,155 @@
+<!-- home.html (the extended content) -->
+{% extends "baseCSM.html" %}
+
+{% block content %}
+  {% if classification_results %}
+  <div class="rounded-rectangle-result" id="classification-results" style="text-align: center;">
+    <h2>Classification Results</h2>
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Accuracy</th>
+        <th>Recall</th>
+        <th>Precision</th>
+        <th>F1-Score</th>
+      </tr>
+      {% for i in range(classification_results|length) %}
+      <tr>
+        <td>{{ classification_results[i].filename }}</td>
+        <td>{{ classification_results[i].accuracy|round(4) }}</td>
+        <td>{{ classification_results[i].recall|round(4) }}</td>
+        <td>{{ classification_results[i].precision|round(4) }}</td>
+        <td>{{ classification_results[i].f1|round(4) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="de-identification-threshold">
+      <br>
+      <strong>De-Identification Threshold:</strong>
+      <ul>
+        {% for i in range(differences_classification|length) %}
+        <li style="font-size: 18px; font-weight: bold; {% if differences_classification[i].accuracy > 0.1 %}color: red;{% elif differences_classification[i].accuracy >= 0.075 %}color: orange;{% elif differences_classification[i].accuracy >= 0.05 %}color: green;{% else %}color: #007700;{% endif %}">
+          
+          {% if differences_classification[i].accuracy > 0.1 %}
+            High ({{ differences_classification[i].accuracy|round(4) }})
+          {% elif differences_classification[i].accuracy >= 0.075 %}
+            Medium ({{ differences_classification[i].accuracy|round(4) }})
+          {% elif differences_classification[i].accuracy >= 0.05 %}
+            Low ({{ differences_classification[i].accuracy|round(4) }})
+          {% else %}
+            Below Low ({{ differences_classification[i].accuracy|round(4) }})
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if regression_results %}
+  <div class="rounded-rectangle-result" id="regression-results" style="text-align: center;">
+    <h2>Regression Results</h2>
+    <table>
+      <tr>
+        <th>File</th>
+        <th>R-Squared</th>
+        <th>Adjusted R-Squared</th>
+        <th>Mean Absolute Error</th>
+      </tr>
+      {% for i in range(regression_results|length) %}
+      <tr>
+        <td>{{ regression_results[i].filename }}</td>
+        <td>{{ regression_results[i].r_squared|round(4) }}</td>
+        <td>{{ regression_results[i].adj_r_squared|round(4) }}</td>
+        <td>{{ regression_results[i].mean_abs_error|round(4) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="de-identification-threshold">
+      <br>
+      <strong>De-Identification Threshold:</strong>
+      <ul>
+        {% for i in range(differences_regression|length) %}
+        <li style="font-size: 18px; font-weight: bold; {% if differences_regression[i].r_squared > 0.1 %}color: red;{% elif differences_regression[i].r_squared >= 0.075 %}color: orange;{% elif differences_regression[i].r_squared >= 0.05 %}color: green;{% else %}color: #007700;{% endif %}">
+          
+          {% if differences_regression[i].r_squared > 0.1 %}
+            High ({{ differences_regression[i].r_squared|round(4) }})
+          {% elif differences_regression[i].r_squared >= 0.075 %}
+            Medium ({{ differences_regression[i].r_squared|round(4) }})
+          {% elif differences_regression[i].r_squared >= 0.05 %}
+            Low ({{ differences_regression[i].r_squared|round(4) }})
+          {% else %}
+            Below Low ({{ differences_regression[i].r_squared|round(4) }})
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if clustering_results %}
+  <div class="rounded-rectangle-result" id="clustering-results" style="text-align: center;">
+    <h2>Clustering Results</h2>
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Optimal Clusters</th>
+        <th>Silhouette Score</th>
+        <!-- <th>ARI</th> -->
+      </tr>
+      {% for i in range(clustering_results|length) %}
+      <tr>
+        <td>{{ clustering_results[i].filename }}</td>
+        <td>{{ clustering_results[i].optimal_clusters|round(4) }}</td>
+        <td>{{ clustering_results[i].silhouette_score|round(4) }}</td>
+        <!-- <td>{{ clustering_results[i].ari|round(4) }}</td> -->
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="de-identification-threshold">
+      <br>
+      <strong>De-Identification Threshold:</strong>
+      <ul>
+        {% for i in range(differences_clustering|length) %}
+        <li style="font-size: 18px; font-weight: bold; {% if differences_clustering[i].silhouette_score > 0.1 %}color: red;{% elif differences_clustering[i].silhouette_score >= 0.075 %}color: orange;{% elif differences_clustering[i].silhouette_score >= 0.05 %}color: green;{% else %}color: #007700;{% endif %}">
+          
+          {% if differences_clustering[i].silhouette_score > 0.1 %}
+            High ({{ differences_clustering[i].silhouette_score|round(4) }})
+          {% elif differences_clustering[i].silhouette_score >= 0.075 %}
+            Medium ({{ differences_clustering[i].silhouette_score|round(4) }})
+          {% elif differences_clustering[i].silhouette_score >= 0.05 %}
+            Low ({{ differences_clustering[i].silhouette_score|round(4) }})
+          {% else %}
+            Below Low ({{ differences_clustering[i].silhouette_score|round(4) }})
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Rounded-rectangle for De-Identification Threshold Table (Outside if conditions) -->
+  <div class="rounded-rectangle-result" id="de-identification-threshold-table" style="text-align: center;">
+    <h2>De-Identification Threshold Table</h2>
+    <table style="margin: auto;">
+      <tr>
+        <th>Threshold Range</th>
+        <th>Label</th>
+      </tr>
+      <tr>
+        <td>Low (0.05-0.0749)</td>
+        <td style="color: rgb(14, 209, 14); font-weight: bold;">Low</td>
+      </tr>
+      <tr>
+        <td>Medium (0.075-0.099)</td>
+        <td style="color: orange; font-weight: bold;">Medium</td>
+      </tr>
+      <tr>
+        <td>High (&gt;0.1)</td>
+        <td style="color: red; font-weight: bold;">High</td>
+      </tr>
+    </table>
+  </div>
+{% endblock %}
