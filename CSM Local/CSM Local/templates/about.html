@@ -1,0 +1,41 @@
+<!-- about.html (the extended content) -->
+{% extends "baseCSM.html" %}
+
+{% block title %}About Our Team{% endblock %}
+
+{% block content %}
+
+<div class="flex-container-col">
+    <div class="rounded-rectangle-home" id="before">
+
+        <div class="rounded-rectangle-home3">
+            <img src="john_doe_profile.jpg" alt="John Doe's Profile Picture" class="profile-picture">
+            <div class="profile-description">
+                <h2>John Doe - Data Security Specialist</h2>
+                <p>John Doe is a seasoned data security specialist, dedicated to addressing concerns related to the security of machine learning models when handling sensitive information. His expertise lies in implementing robust security measures and exploring advanced de-identification techniques to ensure the privacy of sensitive data in our systems.</p>
+            </div>
+        </div>
+
+        <div class="rounded-rectangle-home3">
+            <img src="jane_smith_profile.jpg" alt="Jane Smith's Profile Picture" class="profile-picture">
+            <div class="profile-description">
+                <h2>Jane Smith - De-Identification Expert</h2>
+                <p>Jane Smith, our de-identification expert, leads the exploration of various de-identification methods. With a focus on removing or modifying personally identifiable information (PII) while retaining analytical utility, Jane's contributions are crucial in striking the right balance between privacy protection and model performance.</p>
+            </div>
+        </div>
+
+        <div class="rounded-rectangle-home3">
+            <img src="robert_johnson_profile.jpg" alt="Robert Johnson's Profile Picture" class="profile-picture">
+            <div class="profile-description">
+                <h2>Robert Johnson - Machine Learning Model Specialist</h2>
+                <p>Robert Johnson, our machine learning model specialist, is at the intersection of data privacy and model performance. He guides the development of our Machine Learning Evaluator, ensuring it assesses different de-identification techniques and provides valuable insights into applying them to various types of models. Robert's work ensures our models are both secure and effective across classifications, regressions, and clustering.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}

@@ -125,6 +125,12 @@ def CSM():
     filenames = os.listdir(app.config['UPLOAD_FOLDER'])
     return render_template('CSM.html')
 
+@app.route('/about', methods=['GET', 'POST'])
+def about():
+    
+    return render_template('about.html')
+
+
 @app.route('/evaluate', methods=['GET', 'POST'])
 def evaluate():
     filenames = os.listdir(app.config['UPLOAD_FOLDER'])
