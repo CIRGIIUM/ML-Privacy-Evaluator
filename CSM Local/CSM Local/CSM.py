@@ -8,8 +8,9 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'csv'}
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+# Ensure the upload folder exists
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -31,6 +32,11 @@ def train_evaluate():
         results = []
         for dataset in datasets:
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], dataset)
+            
+            if not os.path.exists(file_path):
+                return jsonify({'error': f'File not found: {dataset}'})
+            
+
             X, y = preprocess_regression_classification(file_path)
 
             if task_type == 'classification':
@@ -208,4 +214,4 @@ def edit_column():
     return jsonify({'error': 'File not found.'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
