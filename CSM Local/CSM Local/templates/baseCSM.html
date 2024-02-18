@@ -148,12 +148,13 @@ h2{
             /* background-color: #a9a8a8; */
         }
         .center-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: auto;
-        }
+      padding-top: 70px; /* Adjust this value to match the height of your navigation bar */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 70px); /* Adjust this value to ensure full viewport height */
+      overflow: auto;
+    }
         
 
         h1 {
@@ -423,6 +424,20 @@ h2{
     .profile-description {
         max-width: 800px;
     }
+
+    /* Media query for smaller screens */
+@media screen and (max-width: 800px) {
+    .center-wrapper {
+        padding-top: 15%; /* Adjust this value as needed */
+        min-height: calc(100vh - 15%); /* Adjust this value as needed */
+    }
+
+    .rounded-rectangle {
+        padding: 10%; /* Adjust this value as needed */
+        margin-top: 15%; /* Adjust this value as needed */
+        height: 60vh; /* Adjust this value as needed */
+        width: 80vw; /* Adjust this value as needed */
+    }
     
 </style>
     </style>
@@ -451,16 +466,9 @@ h2{
           <a href="#">About</a>
         </div>
       </div>
-    <div class="center-wrapper">
-        
-
-            
-
-            {% block content %}{% endblock %}
-
-        </div>
-    </div>
-
-    {% block script %}{% endblock %}
-</body>
-</html>
+      <div class="center-wrapper">
+        {% block content %}{% endblock %}
+      </div>
+      {% block script %}{% endblock %}
+    </body>
+    </html>
