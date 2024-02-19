@@ -7,8 +7,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from diffprivlib.models import KMeans as DP_KMeans
 import warnings
 
-# Step 1: Read the csv file (Mall_Customers.csv in this case)
-uploaded_df = pd.read_csv("Sleep_health_and_lifestyle_dataset.csv")
+# Step 1: Read the csv file 
+uploaded_df = pd.read_csv("exercise_dataset.csv")
 
 # Step 2: Identify the target column (y) based on the presence of "DV" in the column name
 y_column = [col for col in uploaded_df.columns if re.search(r'DV', col, re.IGNORECASE)]
