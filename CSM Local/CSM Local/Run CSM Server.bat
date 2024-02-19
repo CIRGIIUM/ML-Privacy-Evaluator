@@ -5,4 +5,4 @@ set FLASK_ENV=development
 set FLASK_DEBUG=1
 start cmd /k "flask run --port=5001"
 timeout /t 5
-start opera http://127.0.0.1:5001
+start chrome http://127.0.0.1:5001
