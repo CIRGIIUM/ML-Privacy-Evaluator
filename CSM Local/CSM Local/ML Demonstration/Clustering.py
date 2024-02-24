@@ -67,17 +67,17 @@ true_labels = uploaded_df[y_column].values
 ari_optimal = adjusted_rand_score(true_labels, kmeans_optimal.labels_)
 print("Adjusted Rand Index (regular K-means):", round(ari_optimal, 4))
 
-# Step 9: Apply differential privacy to K-means clustering
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    dp_kmeans_optimal = DP_KMeans(n_clusters=optimal_clusters, epsilon=1.0, random_state=42)
-    dp_kmeans_optimal.fit(X_scaled)
-dp_labels_optimal = dp_kmeans_optimal.predict(X_scaled)
+# # Step 9: Apply differential privacy to K-means clustering
+# with warnings.catch_warnings():
+#     warnings.simplefilter("ignore")
+#     dp_kmeans_optimal = DP_KMeans(n_clusters=optimal_clusters, epsilon=1.0, random_state=42)
+#     dp_kmeans_optimal.fit(X_scaled)
+# dp_labels_optimal = dp_kmeans_optimal.predict(X_scaled)
 
-# Step 10: Calculate Silhouette Score for the optimal number of clusters (differential private K-means)
-silhouette_score_dp_optimal = silhouette_score(X_scaled, dp_labels_optimal)
-print("Silhouette Score (DP K-means):", round(silhouette_score_dp_optimal, 4))
+# # Step 10: Calculate Silhouette Score for the optimal number of clusters (differential private K-means)
+# silhouette_score_dp_optimal = silhouette_score(X_scaled, dp_labels_optimal)
+# print("Silhouette Score (DP K-means):", round(silhouette_score_dp_optimal, 4))
 
-# Step 11: Calculate Adjusted Rand Index for the optimal number of clusters (differential private K-means)
-ari_dp_optimal = adjusted_rand_score(true_labels, dp_labels_optimal)
-print("Adjusted Rand Index (DP K-means):", round(ari_dp_optimal, 4))
+# # Step 11: Calculate Adjusted Rand Index for the optimal number of clusters (differential private K-means)
+# ari_dp_optimal = adjusted_rand_score(true_labels, dp_labels_optimal)
+# print("Adjusted Rand Index (DP K-means):", round(ari_dp_optimal, 4))

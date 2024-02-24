@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import os
 from utilsCSM import *
+from sklearn.decomposition import PCA 
 
 app = Flask(__name__)
 
@@ -187,6 +188,19 @@ def view_csv():
     # Add a response for GET requests (if needed)
     return jsonify({'message': 'This endpoint supports POST requests only.'})
 
+def laplace_noise(data_column, scale=0.1):
+    """
+    Add Laplace noise to a data column.
+
+    Parameters:
+    - data_column (pandas.Series): Data column to which noise will be added.
+    - scale (float): Scale parameter of the Laplace distribution. Default is 0.1.
+
+    Returns:
+    - pandas.Series: Data column with Laplace noise added.
+    """
+    noise = np.random.laplace(scale=scale, size=len(data_column))
+    return data_column + noise
 
 
 @app.route('/edit', methods=['POST'])
@@ -212,6 +226,37 @@ def edit_column():
                         'top_5_rows': top_5_rows})
 
     return jsonify({'error': 'File not found.'})
+
+# Add a function for masking
+def mask_data(data_column):
+ 
+    masked_data = data_column.apply(lambda x: x[:len(x)//2] + '*'*(len(x)-len(x)//2))
+    return masked_data
+
+# Modify the add_noise function to handle both noise addition and masking
+@app.route('/add_noise', methods=['POST'])
+def add_noise():
+    filename = request.form['filename']
+    column = request.form['column']
+    action = request.form['action']
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        df = read_csv_file(file_path)
+
+        if action == 'laplace_noise':
+            df[column] = laplace_noise(df[column])
+        elif action == 'mask':
+            df[column] = mask_data(df[column])
+        else:
+            return jsonify({'error': 'Invalid action.'})
+
+        df.to_csv(file_path, index=False)
+        top_5_rows = df.head(5).to_html(index=False)
+        return jsonify({'message': f'Operation applied successfully to column "{column}".', 'top_5_rows': top_5_rows})
+
+    return jsonify({'error': 'File not found.'})
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

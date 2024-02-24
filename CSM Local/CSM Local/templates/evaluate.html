@@ -6,6 +6,7 @@
 <div class="flex-container-row">
   <div class="rounded-rectangle1" id="info">
     <h2>List of Datasets</h2>
+    <p>Please select a dataset from the list below:</p>
     <ul>
       {% for filename in filenames %}
       <li>
@@ -25,11 +26,15 @@
   <div class="rounded-rectangle1" id="table-container-1" style="display: none;">
     <h2>View</h2>
     <div id="table-content-1"></div>
+    <br>
+    Select column to add more de-identification: <br><br>
   </div>
 
   <div class="rounded-rectangle1" id="table-container-2" style="display: none;">
     <h2>View</h2>
     <div id="table-content-2"></div>
+    <br>
+    Select column to add more de-identification: <br><br>
   </div>
 </div>
 {% endblock %}
@@ -46,6 +51,150 @@
     const tableContents = [document.getElementById('table-content-1'), document.getElementById('table-content-2')];
     const activeFiles = [];
 
+    // Function to fetch dataset content
+    function fetchDatasetContent(filename, button) {
+      fetch('/view', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: filename
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          const columns = data.columns;
+          let tableHTML = '<table border="1"><tr>';
+          for (const col of columns) {
+            tableHTML += `<th>${col}</th>`;
+          }
+          tableHTML += '</tr>';
+          for (let i = 0; i < 5 && i < data.rows.length; i++) {
+            tableHTML += '<tr>';
+            for (const col of columns) {
+              tableHTML += `<td>${data.rows[i][col]}</td>`;
+            }
+            tableHTML += '</tr>';
+          }
+          tableHTML += '</table>';
+          const index = activeFiles.length - 1;
+          tableContents[index].innerHTML = tableHTML;
+          tableContainers[index].style.display = 'block';
+
+          // Get column names for adding noise or transformations
+          const columnSelect = document.createElement('select');
+          columnSelect.id = `column-select-${index}`;
+          for (const col of columns) {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            columnSelect.appendChild(option);
+          }
+          const noiseButton = document.createElement('button');
+          noiseButton.textContent = 'Add Laplace Noise';
+          noiseButton.style.display = 'none'; // Initially hide Laplace noise button
+          const maskButton = document.createElement('button');
+          maskButton.textContent = 'Mask';
+          maskButton.style.display = 'none'; // Initially hide Mask button
+          
+          columnSelect.addEventListener('change', function() {
+            const column = this.value;
+            const dataType = getColumnDataType(data.rows, column);
+            if (dataType === 'string') {
+              noiseButton.style.display = 'none';
+              maskButton.style.display = 'inline-block';
+            } else if (dataType === 'number') {
+              noiseButton.style.display = 'inline-block';
+              maskButton.style.display = 'none';
+            } else {
+              noiseButton.style.display = 'none';
+              maskButton.style.display = 'none';
+            }
+          });
+          
+          noiseButton.addEventListener('click', function() {
+            addNoise(filename, columnSelect.value, index); // Pass the correct index here
+          });
+          maskButton.addEventListener('click', function() {
+            applyMask(filename, columnSelect.value, index); // Pass the correct index here
+          });
+          
+          tableContainers[index].appendChild(columnSelect);
+          tableContainers[index].appendChild(noiseButton);
+          tableContainers[index].appendChild(maskButton);
+        }
+      })
+      .catch(error => {
+        alert('An error occurred while fetching data.');
+        console.error(error);
+      });
+    }
+
+    // Function to get the data type of a column
+    function getColumnDataType(rows, column) {
+      const firstValue = rows.find(row => row[column] !== undefined)[column];
+      return typeof firstValue;
+    }
+
+    // Function to handle addition of Laplace noise
+    function addNoise(filename, column, index) { // Add 'index' parameter here
+      fetch('/add_noise', {
+        method: 'POST',
+        body: new URLSearchParams({
+          filename: filename,
+          column: column,
+          action: 'laplace_noise'
+        }),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          tableContents[index].innerHTML = data.top_5_rows; // Use the correct index here
+        }
+      })
+      .catch(error => {
+        alert('An error occurred while adding noise.');
+        console.error(error);
+      });
+    }
+
+    // Function to handle masking
+    function applyMask(filename, column, index) { // Add 'index' parameter here
+      fetch('/add_noise', {
+        method: 'POST',
+        body: new URLSearchParams({
+          filename: filename,
+          column: column,
+          action: 'mask'
+        }),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          tableContents[index].innerHTML = data.top_5_rows; // Use the correct index here
+        }
+      })
+      .catch(error => {
+        alert('An error occurred while applying masking.');
+        console.error(error);
+      });
+    }
+
+    // Add event listeners to view buttons
     viewButtons.forEach((button, index) => {
       button.addEventListener('click', function() {
         const filename = this.dataset.filename;
@@ -59,79 +208,8 @@
             this.classList.remove('active');
           } else {
             activeFiles.push(filename);
-            tableContainers[activeFiles.length - 1].style.display = 'block';
+            fetchDatasetContent(filename, this);
             this.classList.add('active');
-
-            fetch('/view', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                filename: filename
-              })
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.error) {
-                const fileIndex = activeFiles.indexOf(filename);
-                activeFiles.splice(fileIndex, 1);
-                tableContainers[activeFiles.length].style.display = 'none';
-                this.classList.remove('active');
-                alert(data.error);
-              } else {
-                const columns = data.columns;
-                let tableHTML = '<table border="1"><tr>';
-                for (const col of columns) {
-                  tableHTML += `<th>${col}</th>`;
-                }
-                tableHTML += '</tr>';
-                for (let i = 0; i < 5 && i < data.rows.length; i++) {
-                  tableHTML += '<tr>';
-                  for (const col of columns) {
-                    tableHTML += `<td>${data.rows[i][col]}</td>`;
-                  }
-                  tableHTML += '</tr>';
-                }
-                tableHTML += '</table>';
-                tableContents[activeFiles.length - 1].innerHTML = tableHTML;
-
-                
-
-                // Get the column names and find the DV column
-                const dvColumnName = Object.keys(data.rows[0]).find(columnName => columnName.endsWith('DV'));
-
-                if (dvColumnName) {
-                  const dvColumnValues = data.rows.map(row => row[dvColumnName]);
-
-                  // Convert string values to numbers for comparison
-                  const numericDvColumnValues = dvColumnValues.map(Number);
-
-                  // Check if the DV column has only numeric "0" and "1" values
-                  if (numericDvColumnValues.every(value => value === 0 || value === 1)) {
-                    // Use a simple check to determine classification or not
-                    if (numericDvColumnValues.includes(0) && numericDvColumnValues.includes(1)) {
-                      suitableText.innerHTML = 'Suitable for Classification';
-                    } else {
-                      suitableText.innerHTML = 'Suitable for Regression/Clustering';
-                    }
-                  } else {
-                    suitableText.innerHTML = 'Suitable for Regression/Clustering';
-                  }
-                } else {
-                  suitableText.innerHTML = 'No DV Column Found';
-                }
-
-                }
-                })
-            .catch(error => {
-              const fileIndex = activeFiles.indexOf(filename);
-              activeFiles.splice(fileIndex, 1);
-              tableContainers[activeFiles.length].style.display = 'none';
-              this.classList.remove('active');
-              alert('An error occurred while fetching data.');
-              console.error(error);
-            });
           }
         }
       });
